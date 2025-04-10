@@ -1,7 +1,7 @@
 import { useSignIn } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { View, TextInput, Button, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, TextInput, Button, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 
 export default function Login() {
   const { signIn, setActive } = useSignIn();
@@ -28,30 +28,31 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Login</Text>
+      
       <TextInput
         style={styles.input}
-        placeholder='Email'
+        placeholder="Email"
         value={email}
         onChangeText={setEmail}
-        placeholderTextColor='#666'
-        keyboardType='email-address'
       />
       <TextInput
         style={styles.input}
-        placeholder='Password'
+        placeholder="Password"
         value={password}
         onChangeText={setPassword}
-        placeholderTextColor='#666'
         secureTextEntry
       />
 
       {loading ? (
-        <ActivityIndicator size="large" color="#007bff" />
-      ) : (
-        <Button title="Login" onPress={handleLogin} />
-      )}
+              <ActivityIndicator size="large" color="#007bff" />
+            ) : (
+              <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                <Text style={styles.buttonText}>Login</Text>
+              </TouchableOpacity>
+            )}
 
-      <Text onPress={() => router.push('/register')}>Go to Register</Text>
+      <Text style={styles.linkText} onPress={() => router.push('/register')}>Go to Register</Text>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
@@ -65,6 +66,24 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#f5f5f5',
   },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 24,
+  },
+  button: {
+    backgroundColor: '#007bff',
+    width: '100%',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
   input: {
     width: '100%',
     padding: 12,
@@ -77,6 +96,10 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     marginBottom: 16,
-    fontWeight: 600
   },
+  linkText: {
+    fontSize: 16,
+    color: '#007bff',
+    fontWeight: 'bold',
+  }
 });
