@@ -15,13 +15,12 @@ export default function Dashboard() {
     router.replace('/login');
   };
 
-  const handleScanBarcode = () => {
+  const handleScan = () => {
     router.push('/scan');
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Logout Icon */}
       <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={28} color="#333" />
       </TouchableOpacity>
@@ -32,9 +31,8 @@ export default function Dashboard() {
         Welcome, {user?.primaryEmailAddress?.emailAddress}
       </Text>
 
-      {/* Scan Barcode Button */}
-      <TouchableOpacity style={styles.button} onPress={handleScanBarcode}>
-        <Text style={styles.buttonText}>Scan Barcode</Text>
+      <TouchableOpacity style={styles.button} onPress={handleScan}>
+        <Text style={styles.buttonText}>Scan ISBN</Text>
       </TouchableOpacity>
     </View>
   );
@@ -50,9 +48,9 @@ const styles = StyleSheet.create({
   },
   logoutIcon: {
     position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 1,
+    top: 32,
+    right: 32,
+    zIndex: 1
   },
   title: {
     fontSize: 32,

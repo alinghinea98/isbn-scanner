@@ -1,7 +1,7 @@
 import { useSignIn } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { View, TextInput, Button, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, TextInput, Button, Text, ActivityIndicator, StyleSheet, TouchableOpacity, Keyboard } from 'react-native';
 
 export default function Login() {
   const { signIn, setActive } = useSignIn();
@@ -13,6 +13,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     setLoading(true);
+    Keyboard.dismiss();
     try {
       const result = await signIn?.create({ identifier: email, password });
       if (setActive) {
@@ -33,12 +34,14 @@ export default function Login() {
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor="#666"
         value={email}
         onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}
         placeholder="Password"
+        placeholderTextColor="#666"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
