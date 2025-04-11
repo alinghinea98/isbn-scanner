@@ -1,19 +1,81 @@
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
-import { View, Text, Button } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Icon lib
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Dashboard() {
   const { user } = useUser();
   const { signOut } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  const handleLogout = async () => {
+    await signOut();
+    router.replace('/login');
+  };
+
+  const handleScanBarcode = () => {
+    router.push('/scan');
+  };
 
   return (
-    <View>
-      <Text>Welcome, {user?.primaryEmailAddress?.emailAddress}</Text>
-      <Button title="Logout" onPress={async () => {
-        await signOut();
-        router.replace('/login');
-      }} />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Logout Icon */}
+      <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
+        <Ionicons name="log-out-outline" size={28} color="#333" />
+      </TouchableOpacity>
+
+      <Text style={styles.title}>Dashboard</Text>
+
+      <Text style={styles.welcomeText}>
+        Welcome, {user?.primaryEmailAddress?.emailAddress}
+      </Text>
+
+      {/* Scan Barcode Button */}
+      <TouchableOpacity style={styles.button} onPress={handleScanBarcode}>
+        <Text style={styles.buttonText}>Scan Barcode</Text>
+      </TouchableOpacity>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  logoutIcon: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 1,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginTop: 60,
+    marginBottom: 24,
+  },
+  welcomeText: {
+    fontSize: 18,
+    marginBottom: 32,
+    color: '#333',
+    textAlign: 'center',
+  },
+  button: {
+    backgroundColor: '#007bff',
+    width: '100%',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
