@@ -1,29 +1,54 @@
 import { useSignUp } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { View, TextInput, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  View,
+  TextInput,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 
 export default function Register() {
   const { signUp, setActive } = useSignUp();
   const router = useRouter();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [step, setStep] = useState<'register' | 'verify'>('register');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
     setLoading(true);
+    setError('');
     try {
       await signUp?.create({ emailAddress: email, password });
       await signUp?.prepareEmailAddressVerification({ strategy: 'email_code' });
-      await signUp?.attemptEmailAddressVerification({ code: '000000' });
+
+      setStep('verify');
+    } catch (err: any) {
+      setError(err.errors?.[0]?.message || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await signUp?.attemptEmailAddressVerification({ code });
 
       if (setActive) {
         await setActive({ session: signUp?.createdSessionId });
       }
+
       router.replace('/dashboard');
     } catch (err: any) {
-      setError(err.errors?.[0]?.message || 'Registration failed');
+      setError(err.errors?.[0]?.message || 'Verification failed');
     } finally {
       setLoading(false);
     }
@@ -33,29 +58,52 @@ export default function Register() {
     <View style={styles.container}>
       <Text style={styles.title}>Register</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        placeholderTextColor='#666'
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        placeholderTextColor='#666'
-        secureTextEntry
-      />
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#007bff" />
+      {step === 'register' ? (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholderTextColor="#666"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholderTextColor="#666"
+            secureTextEntry
+          />
+          {loading ? (
+            <ActivityIndicator size="large" color="#007bff" />
+          ) : (
+            <TouchableOpacity style={styles.button} onPress={handleRegister}>
+              <Text style={styles.buttonText}>Register</Text>
+            </TouchableOpacity>
+          )}
+        </>
       ) : (
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Register</Text>
-        </TouchableOpacity>
+        <>
+          <Text style={styles.subtitle}>Check your email for the verification code.</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Verification Code"
+            value={code}
+            onChangeText={setCode}
+            placeholderTextColor="#666"
+            keyboardType="numeric"
+          />
+          {loading ? (
+            <ActivityIndicator size="large" color="#007bff" />
+          ) : (
+            <TouchableOpacity style={styles.button} onPress={handleVerify}>
+              <Text style={styles.buttonText}>Verify Email</Text>
+            </TouchableOpacity>
+          )}
+        </>
       )}
 
       <View style={styles.registerLinkContainer}>
@@ -65,7 +113,7 @@ export default function Register() {
         </TouchableOpacity>
       </View>
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -83,6 +131,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 24,
   },
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+    color: '#333',
+  },
   input: {
     width: '100%',
     padding: 12,
@@ -94,8 +148,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
-    marginBottom: 16,
-    fontWeight: 600,
+    marginTop: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   button: {
     backgroundColor: '#007bff',
