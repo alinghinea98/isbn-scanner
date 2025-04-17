@@ -22,51 +22,73 @@ export default function App() {
   }
 
   const takePicture = async () => {
-    if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
-        base64: true,
-      });
-      if (!photo) return;
-      setPhotoUri(photo.uri);
-
-      try {
-        const response = await fetch('https://api.openai.com/v1/images/generations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPEN_AI}`,
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            input: [
-              {
-                role: 'user',
-                content: [
-                  { type: 'input_text', text: "Extract ISBN from this image and provide details" },
-                  {
-                    type: 'input_image',
-                    image_url: `data:image/jpeg;base64,${photo.base64}`,
+    if (!cameraRef.current) return;
+    
+    const photo = await cameraRef.current.takePictureAsync({
+      quality: 0.7,
+      base64: true,
+    });
+    
+    if (!photo) return;
+    setPhotoUri(photo.uri);
+    
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.OPEN_AI_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.5-preview',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Extract ISBN number from this image. It should match this regex /(?:ISBN(?:-13)?:?\\s*)?(\\d{10,13})/i' },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:image/jpeg;base64,${photo.base64}`,
                   },
-                ],
-              },
-            ],
-          }),
-        });
-
-        const data = await response.json();
-        console.log(data);
-        if (data.output_text) {
-          Alert.alert('Recognition Result', data.output_text);
-        } else {
-          Alert.alert('Error', 'No result found.');
-        }
-      } catch (error) {
-        Alert.alert('Error', 'An error occurred while processing the image.');
+                },
+              ],
+            },
+          ],
+          max_tokens: 500,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!data.choices || !data.choices[0]?.message?.content) {
+        Alert.alert('Error', 'No result from OpenAI.');
+        return;
       }
+      const isbnMatch = data.choices[0].message.content.match(/(?:ISBN(?:-13)?:?\s*)?(\d{10,13})/i);
+      
+      if (!isbnMatch) {
+        Alert.alert('Error', 'ISBN not found in the image.');
+        return;
+      }
+      const isbn = isbnMatch[1];
+      const bookResponse = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`);
+      const bookData = await bookResponse.json();
+      const bookInfo = bookData[`ISBN:${isbn}`];
+      
+      if (!bookInfo) {
+        Alert.alert('Error', 'Book details not found.');
+        return;
+      }
+      
+      Alert.alert('Book Details', `Title: ${bookInfo.title}\nAuthor: ${bookInfo.authors?.[0]?.name}\nNumber of pages: ${bookInfo.number_of_pages}`);
+      router.replace('/dashboard');
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while processing the image.');
     }
   };
-
+  
+  
   const handleCancel = () => {
     router.replace('/dashboard');
 };
