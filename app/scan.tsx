@@ -1,7 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Button, StyleSheet, Text, TouchableOpacity, View, Image, Alert } from 'react-native';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BookType } from '@/types/book';
+import { uuid } from 'expo-modules-core';
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -82,6 +85,21 @@ export default function App() {
       }
       
       Alert.alert('Book Details', `Title: ${bookInfo.title}\nAuthor: ${bookInfo.authors?.[0]?.name}\nNumber of pages: ${bookInfo.number_of_pages}`);
+
+      const existingBooks = await AsyncStorage.getItem('books');
+      const books: BookType[] = existingBooks ? JSON.parse(existingBooks) : [];
+      
+      books.push({
+        title: bookInfo.title,
+        author: bookInfo.authors?.[0]?.name ?? 'Unknown',
+        isbn,
+        timestamp: Date.now(),
+        numberOfPages: bookInfo.number_of_pages ?? 'Unknown',
+        id: uuid.v4()
+      });
+      
+      await AsyncStorage.setItem('books', JSON.stringify(books));
+      
       router.replace('/dashboard');
     } catch (error) {
       Alert.alert('Error', 'An error occurred while processing the image.');
